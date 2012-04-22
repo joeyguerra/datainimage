@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Prototyping storing data in PNG file</title>
+	</head>
+	<body>
+		<canvas id="result"></canvas>
+		<script>
+			var objects = [];
+			for(var i = 0; i < 100; i++){
+				objects.push({id:1,content:i + "th todo"});
+			}
+			var text = JSON.stringify(objects);
+			objects = [];
+			for(var i = 0; i < text.length; i++){
+				objects.push(text.substring(i, i+1));
+			}
+			var dimension = calculateMatrixDimension(objects.length);
+			var canvas = document.getElementById("result");
+			var context = canvas.getContext("2d");
+			canvas.width = dimension.width;
+			canvas.height = dimension.height;
+			console.log([canvas.width, canvas.height, text.length]);
+			var c = null;
+			var image = null;
+			for(var row = 0; row < dimension.height; row++){
+				for(var column = 0; column < dimension.width; column++){
+					image = context.createImageData(1,1);
+					for(var color = 0; color < 4; color++){
+						if(color%4==3){
+							image.data[color] = 255;
+							continue;
+						}
+						c = objects.shift();
+						if(!c)continue;
+						image.data[color] = c.charCodeAt(0);
+					}
+					context.putImageData(image, column, row);
+					delete image;
+				}
+			}
+			window.addEventListener("load", function(e){
+				readDataFromCanvas(document.getElementById("result"), function(buffer){
+					var ubounds = buffer.length-1;
+					for(var i = ubounds; i > 0; i--){
+						if(buffer[i].charCodeAt(0) > 0) continue;
+						buffer.pop();
+					}
+					var obj = JSON.parse(buffer.join(""));
+					var data = canvas.toDataURL("image/png");
+					var img = new Image();
+					img.src = data;
+					document.body.appendChild(img);
+					//console.log(obj);
+				});				
+			}, true);
+			function calculateMatrixDimension(size){
+				// Each pixel can store 4 bytes (an integer), so we divide the string size by 4 and round up to the 
+				// nearest whole number.
+				size = Math.ceil(size/3);
+				var width = Math.sqrt(size);
+				if(width%2 === 0) return {width: width, height: width};				
+				width = Math.ceil(width);
+				var height = width;
+				while(width * height <= size){
+					width++;
+				}
+				return {width: width, height: height};
+			}
+			function readDataFromCanvas(canvas, delegate){
+				var image = canvas.getContext("2d").getImageData(0,0,canvas.width,canvas.height);
+				var data = image.data;
+				var buffer = [];
+				var ubounds = data.length;
+				for(var i = 0; i < ubounds; i++){
+					// skip the alpha channel. You shouldn't bee using the alpha channel to store
+					// data anyway because setting it to anything other than 255 will change
+					// the RGB values after the drawing has been rendered in the browser.
+					if(i%4===3) continue;
+					buffer.push(String.fromCharCode(data[i]));
+				}
+				if (delegate) {
+					delegate(buffer);
+				}
+			}
+			
+		</script>
+	</body>
+		
+</html>
