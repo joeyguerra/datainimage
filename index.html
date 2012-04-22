@@ -46,12 +46,15 @@
 						if(buffer[i].charCodeAt(0) > 0) continue;
 						buffer.pop();
 					}
+					// Getting data out of the image.
 					var obj = JSON.parse(buffer.join(""));
+					//console.log(obj);
+					
+					// Creating an image from the data in the canvas object so we can save it some where.
 					var data = canvas.toDataURL("image/png");
 					var img = new Image();
 					img.src = data;
-					document.body.appendChild(img);
-					//console.log(obj);
+					document.body.appendChild(img);					
 				});				
 			}, true);
 			function calculateMatrixDimension(size){
